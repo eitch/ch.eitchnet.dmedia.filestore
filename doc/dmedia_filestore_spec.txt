@@ -1,0 +1,280 @@
+V1 Protocol Specification
+=========================
+
+http://docs.novacut.com/filestore/specification.html
+
+This is a detailed, formal specification of the version 1 Dmedia Hashing
+Protocol.  Before declaring the version 1 protocol final, we'd like to have at
+least one independent "clean-room" implementation of the protocol made from this
+specification, in a language other than Python, and without looking at our
+Python reference implementation.
+
+The Dmedia content-hash is calculated using a `hash-list`_ with a fixed 8 MiB
+leaf-size. The root-hash is cryptographically tied to the file-size, and the
+leaf-hashes are cryptographically tied to the leaf-index (the leaf-wise position
+in the file, starting from zero).
+
+Dmedia uses the `Skein`_ crytographic hash function, specifically the Skein-512
+variant.  The cryptographic tying is done using the Skein *key* parameter.
+
+In a nutshell, the leaf-hashes are calculated like this::
+
+    leaf_hashes = hash(leaf_0, key=0) + hash(leaf_1, key=1) ... + hash(leaf_N, key=N)
+
+And the root-hash is calculated like this::
+
+    root_hash = hash(leaf_hashes, key=file_size)
+
+Where integers like ``file_size`` and ``0`` are transformed into their decimal
+string representation (UTF-8 encoded) for use as the Skein *key*.
+
+
+Constants
+---------
+
+The V1 protocol uses an 8 MiB (8 * 1024 * 1024) leaf-size and a 280-bit
+digest-size (35 bytes).  The digest is 56 characters when base32-encoded.
+There are also two Skein personalization strings used, one for the leaf-hash,
+another for the root-hash.
+
+So there are several constants that any implementation will want to define::
+
+    LEAF_SIZE = 8388608
+    DIGEST_BITS = 280
+    DIGEST_BYTES = 35
+    DIGEST_B32LEN = 56
+    PERS_LEAF = "20110430 jderose@novacut.com dmedia/leaf"
+    PERS_ROOT = "20110430 jderose@novacut.com dmedia/root"
+
+And there are two recommended file-size related constraints::
+
+    MAX_FILE_SIZE = 9007199254740992
+    MAX_LEAF_COUNT = 1073741824
+
+
+Recommended API
+---------------
+
+Protocol implementations are encouraged to define ``hash_leaf()`` and
+``hash_root()`` functions with the same API as the reference implementation.
+
+For languages with exception handling (like Python), it's recommended that you
+raise an exception under error conditions, and otherwise return the digest,
+using function signatures like this::
+
+    hash_leaf(leaf_index, leaf_data) => digest
+    hash_root(file_size, leaf_hashes) => digest
+
+For languages without exception handling (like C), it's recommended that you
+return a status code, and have the caller pass the functions a reference to
+the destination buffer where the digest should be written, like this::
+
+    hash_leaf(leaf_index, leaf_data, digest_buf) => status_code
+    hash_root(file_size, leaf_hashes, digest_buf) => status_code
+
+
+Hashing details
+---------------
+
+Both the leaf-hash and the root-hash use the same 280-bit digest size.  The
+unusual 280-bit digest size is so it can be base32-encoded without requiring
+padding (it's a multiple of 40 bits).
+
+The leaf-hash should be computed using the following UTF-8 encoded Skein
+personalization string::
+
+    "20110430 jderose@novacut.com dmedia/leaf"
+
+And the root-hash should be computed using this UTF-8 encoded Skein
+personalization string::
+
+    "20110430 jderose@novacut.com dmedia/root"
+
+Both the leaf-hash and the root-hash use a Skein *key* parameter constructed
+from an integer value, as detailed in the next section.  Putting this all
+together, shown in Python3 for clarity, the leaf-hash is computed like this::
+
+    >>> leaf_hash = skein512(leaf_data,
+    ...     digest_bits=280,
+    ...     pers=b'20110430 jderose@novacut.com dmedia/leaf',
+    ...     key=str(leaf_index).encode('utf-8'),
+    ... ).digest()
+
+And the root-hash is computed like this::
+
+    >>> root_hash = skein512(leaf_hashes,
+    ...     digest_bits=280,
+    ...     pers=b'20110430 jderose@novacut.com dmedia/root',
+    ...     key=str(file_size).encode('utf-8'),
+    ... ).digest()
+
+Where *leaf_hashes* is formed by concatenating together the leaf-hash from each
+leaf in the file.
+
+
+Constructing the keys
+---------------------
+
+The leaf-hash is cryptographically tied to the leaf-index, and the root-hash
+is cryptographically tied to the file-size.  The tying is done via the Skein
+*key* parameter, which takes arbitrary bytes as input.  These integers must be
+transformed into a sequence of bytes.
+
+The transformation is simple: it is the decimal string representation of the
+integer, when UTF-8 encoded (which in this case is the same as ASCII).  To put
+this into concrete terms with a few examples, in Python you would do this::
+
+    >>> key = str(leaf_index).encode('utf-8')
+
+And in C something like this::
+
+    sprintf(key_buf, "%u", leaf_index);
+
+By hashing these integers according to their decimal string representation (as
+opposed to say their unsigned 64-bit little-endian representation), the hashing
+protocol can support arbitrarily large files, and in an endian-neutral fashion.
+
+However, it's not worth the effort for every implementation to support
+arbitrarily large files *today*... it's only important that the protocol design
+itself support arbitrarily large files.
+
+It's recommended to use a 64-bit unsigned integer for the file-size, and an
+32-bit unsigned integer for the leaf-index.
+
+To accommodate JavaScript, it's recommend that current implementations set a
+file-size limit of 2^53 bytes (approximately 9.01 PB).  With the 8 MiB
+leaf-size, this means a leaf-count limit of 2^30, thus you can use an unsigned
+32-bit integer for the leaf-index.
+
+To aid debugging, here is the md5sum for each of the integer values used in
+the test vectors, when correctly transformed into a key:
+
+    ====================================  ============
+    md5sum                                Integer
+    ====================================  ============
+    ``cfcd208495d565ef66e7dff9f98764da``  ``0``
+    ``c4ca4238a0b923820dcc509a6f75849b``  ``1``
+    ``32433904a755e2b9eb82cf167723b34f``  ``8388607``
+    ``03926fda4e223707d290ac06bb996653``  ``8388608``
+    ``e9b74719ce6b80c5337148d12725db03``  ``8388609``
+    ``48ac8929ffdc78a66090d179ff1237d5``  ``16777215``
+    ``e3e330499348f791337e9da6b534a386``  ``16777216``
+    ====================================  ============
+
+
+Value checking
+--------------
+
+There are number of checks that the ``hash_leaf()`` and ``hash_root()``
+functions should perform in order to make sure the inputs are well-formed.
+
+Your ``hash_leaf()`` function should insure that these conditions are met::
+
+    0 <= leaf_index < MAX_LEAF_COUNT
+    1 <= length(leaf_data) <= LEAF_SIZE
+
+And your ``hash_root()`` function should insure that these conditions are met::
+
+    1 <= file_size <= MAX_FILE_SIZE
+    length(leaf_hashes) >= DIGEST_BYTES
+    length(leaf_hashes) % DIGEST_BYTES == 0
+
+Your ``hash_root()`` function should also calculate upper and lower file-size
+bounds based on the number of leaves, like this::
+
+    count = length(leaf_hashes) / DIGEST_BYTES
+    low = (count - 1) * LEAF_SIZE + 1
+    high = count * LEAF_SIZE
+
+And then ensure that this condition is met::
+
+    low <= file_size <= high
+
+
+Test vectors
+------------
+
+The test vectors are designed to test the interesting corner cases in a
+protocol implementation.  There is no cryptographic significance in the test
+vectors, and they are not intended for verifying the correctness of a Skein
+implementation.
+
+The test vectors are built from three sample leaves which are easy to specify::
+
+    A: 1 byte, the UTF-8 character "A" (0x41)
+    B: the UTF-8 character "B" (0x42) repeated (LEAF_SIZE - 1) times
+    C: the UTF-8 character "C" (0x43) repeated LEAF_SIZE times
+
+Six test files are built from the three test leaves::
+
+    A: A
+    B: B
+    C: C
+    CA: C + A
+    CB: C + B
+    CC: C + C
+
+To aid debugging, here are the the md5sums for six test files (the first three
+of which are the three test leaves):
+
+    ====================================  ======
+    md5sum                                File
+    ====================================  ======
+    ``7fc56270e7a70fa81a5935b72eacbe29``  ``A``
+    ``d2bad3eedb424dd352d65eafbf6c79ba``  ``B``
+    ``5dd3531303dd6764acb93e5f171a4ab8``  ``C``
+    ``0722f8dc36d75acb602dcee8d0427ce0``  ``CA``
+    ``77264eb6eed7777a1ee03e2601fc9f64``  ``CB``
+    ``1fbfabdaafff31967f9a95f3a3d3c642``  ``CC``
+    ====================================  ======
+
+At the leaf-hash level, the test vectors require you to hash each of the three
+leaves twice, once when at leaf-index 0, once when at leaf-index 1::
+
+    A0 = hash_leaf(0, A)
+    A1 = hash_leaf(1, A)
+    B0 = hash_leaf(0, B)
+    B1 = hash_leaf(1, B)
+    C0 = hash_leaf(0, C)
+    C1 = hash_leaf(1, C)
+
+And at the root-hash level, the test vectors require you to hash each of the
+six files, which will use the above leaf-hash results::
+
+    h(A) = hash_root(1, A0)
+    h(B) = hash_root(8388607, B0)
+    h(C) = hash_root(8388608, C0)
+    h(CA) = hash_root(8388609, C0 + A1)
+    h(CB) = hash_root(16777215, C0 + B1)
+    h(CC) = hash_root(16777216, C0 + C1)
+
+Here's the correct base32-encoded digests in machine-readable JSON::
+
+    "leaf_hashes": {
+        "A": [
+            "XZ5I6KJTUSOIWVCEBOKUELTADZUXNHOAYO77NKKHWCIW3HYGYOPMX5JN",
+            "TEC7754ZNM26MTM6YQFI6TMVTTK4RKQEMPAGT2ROQZUBPUIHSJU2DDR3"
+        ],
+        "B": [
+            "P67PVKU3SCCQHNIRMR2Z5NICEMIP36WCFJG4AW6YBAE6UI4K6BVLY3EI",
+            "ZIFO5S2OYYPZAUN6XQWTWZGCDATXCGR2JYN7UIAX54WMVWETMIUFG7WM"
+        ],
+        "C": [
+            "RW2GJFIGPQF5WLR53UAK77TPHNRFKMUBYRB23JFS4G2RFRRNHW6OX4CR",
+            "XBVLPYBUX6QD2DKPJTYVUXT23K3AAUAW5J4RMQ543NQNDAHORQJ7GBDE"
+        ]
+    },
+    "root_hashes": {
+        "A": "FWV6OJYI36C5NN5DC4GS2IGWZXFCZCGJGHK35YV62LKAG7D2Z4LO4Z2S",
+        "B": "OB756PX5V32JMKJAFKIAJ4AFSFPA2WLNIK32ELNO4FJLJPEEEN6DCAAJ",
+        "C": "QSOHXCDH64IQBOG2NM67XEC6MLZKKPGBTISWWRPMCFCJ2EKMA2SMLY46",
+        "CA": "BQ5UTB33ML2VDTCTLVXK6N4VSMGGKKKDYKG24B6DOAFJB6NRSGMB5BNO",
+        "CB": "ER3LDDZ2LHMTDLOPE5XA5GEEZ6OE45VFIFLY42GEMV4TSZ2B7GJJXAIX",
+        "CC": "R6RN5KL7UBNJWR5SK5YPUKIGAOWWFMYYOVESU5DPT34X5MEK75PXXYIX"
+    }
+
+
+
+.. _`Dmedia`: https://launchpad.net/dmedia
+.. _`hash-list`: http://en.wikipedia.org/wiki/Hash_list
+.. _`Skein`: http://www.skein-hash.info
