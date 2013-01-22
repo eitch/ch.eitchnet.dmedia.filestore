@@ -1,4 +1,4 @@
-package skein512;
+package com.h2database.skein;
 import java.util.Arrays;
 
 /**

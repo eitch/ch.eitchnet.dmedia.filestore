@@ -1,12 +1,13 @@
-package skein512.test;
+package com.h2database.skein.test;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.LineNumberReader;
 import java.util.Arrays;
 
-import skein512.Skein512;
-import skein512.Skein512Small;
+import com.h2database.skein.Skein512;
+import com.h2database.skein.Skein512Small;
+
 
 /**
  * Skein 1.3 512-512 self test and performance benchmark.
@@ -18,7 +19,7 @@ public class Skein512Test {
 	/**
 	 * 
 	 */
-	private static final String TEST_VECTORS_TXT = "/testVectors.txt";
+	private static final String TEST_VECTORS_TXT = "/h2database/testVectors.txt";
 
 	/**
 	 * Run all tests.

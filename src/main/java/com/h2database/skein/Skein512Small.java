@@ -1,4 +1,4 @@
-package skein512;
+package com.h2database.skein;
 //Skein 1.3 512-512. Author: Thomas Mueller, 2008-2010. Public domain.
 public class Skein512Small {
     public static void hash(byte[] m, byte[] h) {
