@@ -19,6 +19,8 @@ import java.util.logging.Level;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 
+import org.junit.Test;
+
 import nl.warper.threefish.ThreefishImpl;
 import nl.warper.threefish.ThreefishSecretKey;
 
@@ -276,7 +278,8 @@ public class SkeinMain {
 	/**
 	 * @param args JAVADOC .
 	 */
-	public static void main(final String ... args) {
+	@Test
+	public void testSkeinImpl() {
 		System.out.println();
 		System.out.println(" === Threefish encrypt and decyrpt === ");
 		testThreefish(256, 72);
