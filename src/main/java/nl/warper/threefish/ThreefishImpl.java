@@ -51,7 +51,7 @@ public class ThreefishImpl {
 
 	// === GENERAL CONSTANTS ===
 
-	private static final long EXTENDED_KEY_SCHEDULE_CONST = 6148914691236517205L;
+	private static final long EXTENDED_KEY_SCHEDULE_CONST = 0x1BD11BDAA9FC1A22L;
 
 	public static final int BLOCK_SIZE_BITS_256 = 256;
 	public static final int BLOCK_SIZE_BITS_512 = 512;
