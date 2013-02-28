@@ -53,12 +53,24 @@ public class SkeinTest {
 		byte[] output;
 		byte[] data;
 		String name;
+		Skein skein;
 
 		name = "E.1";
 		blockSize = 256;
 		outputSize = 256;
-		data = new byte[0];
-		Skein skein = new Skein(blockSize, outputSize);
+		data = new byte[1];
+		data[0] = -1;
+		skein = new Skein(blockSize, outputSize);
+		output = skein.doSkein(data);
+		System.out.printf(LOGFORMAT, name, blockSize, outputSize, data.length, toFormattedHex(data, 1),
+				toFormattedHex(output, 1));
+
+		name = "E.1";
+		blockSize = 512;
+		outputSize = 512;
+		data = new byte[1];
+		data[0] = -1;
+		skein = new Skein(blockSize, outputSize);
 		output = skein.doSkein(data);
 		System.out.printf(LOGFORMAT, name, blockSize, outputSize, data.length, toFormattedHex(data, 1),
 				toFormattedHex(output, 1));
