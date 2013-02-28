@@ -1,3 +1,11 @@
+/*
+ * Copyright (c) 2008 - $Date: 2008/05/29 13:50:21 $, Sdu Identification BV
+ * Classificatie: Commercieel vertrouwelijk
+ *
+ * File:     $rcsfile$
+ * Date:     $Date: 2008/05/29 13:50:21 $
+ * Version:  $Revision: 1.1 $
+ */
 package nl.warper.threefish;
 
 import org.slf4j.Logger;
