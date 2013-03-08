@@ -10,6 +10,9 @@ package nl.warper.skein;
 
 import nl.warper.threefish.ThreefishImpl;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * The main class for the Skein hash algorithm by Niels Ferguson, Stefan Lucks, Bruce Schneier, Doug Whiting, Mihir
  * Bellare, Tadayoshi Kohno, Jon Callas and Jesse Walker.
@@ -20,6 +23,8 @@ import nl.warper.threefish.ThreefishImpl;
  *         method to perform the Skein Hash
  */
 public class Skein {
+
+	private static final Logger logger = LoggerFactory.getLogger(Skein.class);
 
 	// input data
 	private final int blockSize;
@@ -204,6 +209,29 @@ public class Skein {
 
 		final byte[] output = SkeinUtil.lsbArrayOfLongToBytes(outputWords);
 
-		return output;
+		// TODO This is a hack because for some reason the digest is the size of the blockSize
+		// and not the digest. Needs debugging...
+		int outputSizeBytes = this.outputSize / 8;
+		if (output.length == outputSizeBytes) {
+			return output;
+		} else if (output.length < outputSizeBytes) {
+
+			String msg = String.format(
+					"Hashing error: Expected digest size is %d bytes (%d bits), but it is %d bytes (%d bits)",
+					outputSizeBytes, this.outputSize, output.length, (output.length * 8));
+			//throw new SkeinException(msg);
+			logger.warn(msg);
+			return output;
+		}
+
+		String warn = String
+				.format("Hash warning: Expected digest size is %d bytes (%d bits), but it is %d bytes (%d bits). Trimming digest as it is larger.",
+						outputSizeBytes, this.outputSize, output.length, (output.length * 8));
+		Skein.logger.warn(warn);
+
+		// so we trim it, if it is larger (this seems to work as a workaround)
+		byte[] trimmed = new byte[this.outputSize / 8];
+		System.arraycopy(output, 0, trimmed, 0, trimmed.length);
+		return trimmed;
 	}
 }

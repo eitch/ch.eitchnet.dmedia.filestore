@@ -56,11 +56,6 @@ public class DmediaFilestoreTest {
 		byte[] data = message.getBytes();
 		byte[] digest = skein.doSkein(data);
 		logger.info("Digest length: " + digest.length);
-		byte[] trimmed = new byte[DIGEST_BITS/8];
-		System.arraycopy(digest, 0, trimmed, 0, trimmed.length);
-		digest = trimmed;
-		logger.info("Trimmed Digest length: " + digest.length);
-		
 
 		String hash = new String(BaseEncoding.toBase32Dmedia(digest));
 		logger.info("MD5 Hash: " + StringHelper.getHexString(StringHelper.hashMd5(message)));
