@@ -462,10 +462,9 @@ public class SkeinGoldenTest {
 		long end = System.nanoTime();
 		logger.info("Skein512-512 Hashing 200MB took " + StringHelper.formatNanoDuration(end - start));
 
-		skein = new Skein(256, 256);
 		start = System.nanoTime();
 		for (int i = 0; i < 200; i++) {
-			skein = new Skein(512, 512);
+			skein = new Skein(256, 256);
 			skein.doSkein(bytes);
 		}
 		end = System.nanoTime();
