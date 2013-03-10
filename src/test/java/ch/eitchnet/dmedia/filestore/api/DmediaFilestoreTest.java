@@ -109,48 +109,30 @@ public class DmediaFilestoreTest {
 		byte[] bytes;
 
 		// A
-		bytes = new byte[] { 'A' };
+		bytes = generateTestVectorA();
 		Assert.assertEquals("7fc56270e7a70fa81a5935b72eacbe29", StringHelper.getHexString(StringHelper.hashMd5(bytes)));
 
 		// B
-		bytes = new byte[LEAF_SIZE - 1];
-		for (int i = 0; i < bytes.length; i++) {
-			bytes[i] = 'B';
-		}
+		bytes = generateTestVectorB();
 		Assert.assertEquals("d2bad3eedb424dd352d65eafbf6c79ba", StringHelper.getHexString(StringHelper.hashMd5(bytes)));
 
 		// C
-		bytes = new byte[LEAF_SIZE];
-		for (int i = 0; i < bytes.length; i++) {
-			bytes[i] = 'C';
-		}
+		bytes = generateTestVectorC();
 		Assert.assertEquals("5dd3531303dd6764acb93e5f171a4ab8", StringHelper.getHexString(StringHelper.hashMd5(bytes)));
 
 		// CA
-		bytes = new byte[LEAF_SIZE + 1];
-		for (int i = 0; i < bytes.length; i++) {
-			bytes[i] = 'C';
-		}
-		bytes[bytes.length - 1] = 'A';
+		bytes = generateTestVectorCA();
 		Assert.assertEquals("0722f8dc36d75acb602dcee8d0427ce0", StringHelper.getHexString(StringHelper.hashMd5(bytes)));
 
 		// CB
-		bytes = new byte[LEAF_SIZE + LEAF_SIZE - 1];
-		for (int i = 0; i < bytes.length; i++) {
-			if (i >= LEAF_SIZE)
-				bytes[i] = 'B';
-			else
-				bytes[i] = 'C';
-		}
+		bytes = generateTestVectorCB();
 		Assert.assertEquals("77264eb6eed7777a1ee03e2601fc9f64", StringHelper.getHexString(StringHelper.hashMd5(bytes)));
 
 		// CC
-		bytes = new byte[LEAF_SIZE + LEAF_SIZE];
-		for (int i = 0; i < bytes.length; i++) {
-			bytes[i] = 'C';
-		}
+		bytes = generateTestVectorsCC();
 		Assert.assertEquals("1fbfabdaafff31967f9a95f3a3d3c642", StringHelper.getHexString(StringHelper.hashMd5(bytes)));
 
+		// integers
 		Assert.assertEquals("cfcd208495d565ef66e7dff9f98764da", StringHelper.hashMd5AsHex("0"));
 		Assert.assertEquals("c4ca4238a0b923820dcc509a6f75849b", StringHelper.hashMd5AsHex("1"));
 		Assert.assertEquals("48ac8929ffdc78a66090d179ff1237d5", StringHelper.hashMd5AsHex("16777215"));
@@ -159,8 +141,64 @@ public class DmediaFilestoreTest {
 		Assert.assertEquals("03926fda4e223707d290ac06bb996653", StringHelper.hashMd5AsHex("8388608"));
 		Assert.assertEquals("e9b74719ce6b80c5337148d12725db03", StringHelper.hashMd5AsHex("8388609"));
 
+		// personalization
 		Assert.assertEquals("8aee35e23a5a74147b230f12123ca82e", StringHelper.hashMd5AsHex(PERS_LEAF));
 		Assert.assertEquals("0445d91d37383f5384023d49e71cc629", StringHelper.hashMd5AsHex(PERS_ROOT));
+	}
+
+	private byte[] generateTestVectorsCC() {
+		byte[] bytes;
+		bytes = new byte[LEAF_SIZE + LEAF_SIZE];
+		for (int i = 0; i < bytes.length; i++) {
+			bytes[i] = 'C';
+		}
+		return bytes;
+	}
+
+	private byte[] generateTestVectorCB() {
+		byte[] bytes;
+		bytes = new byte[LEAF_SIZE + LEAF_SIZE - 1];
+		for (int i = 0; i < bytes.length; i++) {
+			if (i >= LEAF_SIZE)
+				bytes[i] = 'B';
+			else
+				bytes[i] = 'C';
+		}
+		return bytes;
+	}
+
+	private byte[] generateTestVectorCA() {
+		byte[] bytes;
+		bytes = new byte[LEAF_SIZE + 1];
+		for (int i = 0; i < bytes.length; i++) {
+			bytes[i] = 'C';
+		}
+		bytes[bytes.length - 1] = 'A';
+		return bytes;
+	}
+
+	private byte[] generateTestVectorC() {
+		byte[] bytes;
+		bytes = new byte[LEAF_SIZE];
+		for (int i = 0; i < bytes.length; i++) {
+			bytes[i] = 'C';
+		}
+		return bytes;
+	}
+
+	private byte[] generateTestVectorB() {
+		byte[] bytes;
+		bytes = new byte[LEAF_SIZE - 1];
+		for (int i = 0; i < bytes.length; i++) {
+			bytes[i] = 'B';
+		}
+		return bytes;
+	}
+
+	private byte[] generateTestVectorA() {
+		byte[] bytes;
+		bytes = new byte[] { 'A' };
+		return bytes;
 	}
 
 	@Test
