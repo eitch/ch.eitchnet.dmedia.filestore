@@ -39,6 +39,9 @@ public class DmediaFilestoreTest {
 
 	private static final Logger logger = LoggerFactory.getLogger(DmediaFilestoreTest.class);
 
+	private static final long MAX_FILE_SIZE = 9007199254740992L;
+	private static final long MAX_LEAF_COUNT = 1073741824L;
+
 	private static final int LEAF_SIZE = 8388608;
 	private static final int BLOCK_BITS = 512;
 	private static final int DIGEST_BITS = 240;
@@ -70,8 +73,8 @@ public class DmediaFilestoreTest {
 	public void testDb32Id() {
 
 		String randomId = Dbase32.generateRandomIdAsString();
-		Assert.assertEquals("A Dbas32 ID must be " + Dbase32.RANDOM_ID_ENC_LENGTH + " long", Dbase32.RANDOM_ID_ENC_LENGTH,
-				randomId.length());
+		Assert.assertEquals("A Dbas32 ID must be " + Dbase32.RANDOM_ID_ENC_LENGTH + " long",
+				Dbase32.RANDOM_ID_ENC_LENGTH, randomId.length());
 
 		Dbase32.checkDb32Id(randomId);
 	}
@@ -98,6 +101,66 @@ public class DmediaFilestoreTest {
 		} catch (Dbase32Exception e) {
 			// good
 		}
+	}
+
+	@Test
+	public void testMd5DebugValues() {
+
+		byte[] bytes;
+
+		// A
+		bytes = new byte[] { 'A' };
+		Assert.assertEquals("7fc56270e7a70fa81a5935b72eacbe29", StringHelper.getHexString(StringHelper.hashMd5(bytes)));
+
+		// B
+		bytes = new byte[LEAF_SIZE - 1];
+		for (int i = 0; i < bytes.length; i++) {
+			bytes[i] = 'B';
+		}
+		Assert.assertEquals("d2bad3eedb424dd352d65eafbf6c79ba", StringHelper.getHexString(StringHelper.hashMd5(bytes)));
+
+		// C
+		bytes = new byte[LEAF_SIZE];
+		for (int i = 0; i < bytes.length; i++) {
+			bytes[i] = 'C';
+		}
+		Assert.assertEquals("5dd3531303dd6764acb93e5f171a4ab8", StringHelper.getHexString(StringHelper.hashMd5(bytes)));
+
+		// CA
+		bytes = new byte[LEAF_SIZE + 1];
+		for (int i = 0; i < bytes.length; i++) {
+			bytes[i] = 'C';
+		}
+		bytes[bytes.length - 1] = 'A';
+		Assert.assertEquals("0722f8dc36d75acb602dcee8d0427ce0", StringHelper.getHexString(StringHelper.hashMd5(bytes)));
+
+		// CB
+		bytes = new byte[LEAF_SIZE + LEAF_SIZE - 1];
+		for (int i = 0; i < bytes.length; i++) {
+			if (i >= LEAF_SIZE)
+				bytes[i] = 'B';
+			else
+				bytes[i] = 'C';
+		}
+		Assert.assertEquals("77264eb6eed7777a1ee03e2601fc9f64", StringHelper.getHexString(StringHelper.hashMd5(bytes)));
+
+		// CC
+		bytes = new byte[LEAF_SIZE + LEAF_SIZE];
+		for (int i = 0; i < bytes.length; i++) {
+			bytes[i] = 'C';
+		}
+		Assert.assertEquals("1fbfabdaafff31967f9a95f3a3d3c642", StringHelper.getHexString(StringHelper.hashMd5(bytes)));
+
+		Assert.assertEquals("cfcd208495d565ef66e7dff9f98764da", StringHelper.hashMd5AsHex("0"));
+		Assert.assertEquals("c4ca4238a0b923820dcc509a6f75849b", StringHelper.hashMd5AsHex("1"));
+		Assert.assertEquals("48ac8929ffdc78a66090d179ff1237d5", StringHelper.hashMd5AsHex("16777215"));
+		Assert.assertEquals("e3e330499348f791337e9da6b534a386", StringHelper.hashMd5AsHex("16777216"));
+		Assert.assertEquals("32433904a755e2b9eb82cf167723b34f", StringHelper.hashMd5AsHex("8388607"));
+		Assert.assertEquals("03926fda4e223707d290ac06bb996653", StringHelper.hashMd5AsHex("8388608"));
+		Assert.assertEquals("e9b74719ce6b80c5337148d12725db03", StringHelper.hashMd5AsHex("8388609"));
+
+		Assert.assertEquals("8aee35e23a5a74147b230f12123ca82e", StringHelper.hashMd5AsHex(PERS_LEAF));
+		Assert.assertEquals("0445d91d37383f5384023d49e71cc629", StringHelper.hashMd5AsHex(PERS_ROOT));
 	}
 
 	@Test

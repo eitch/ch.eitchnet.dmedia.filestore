@@ -33,6 +33,26 @@ import ch.eitchnet.utils.helper.BaseEncoding;
 public class Dbase32 {
 
 	/**
+	 * The maximum length of encoded data allowed to be decoded is 96 bytes
+	 */
+	private static final int MAX_ENC_LENGTH = 96;
+
+	/**
+	 * The minimum length of encoded data allowed to be decoded is 8 bytes
+	 */
+	private static final int MIN_ENC_LENGTH = 8;
+
+	/**
+	 * The maximum length of encoded data allowed to be encoded is 60 bytes
+	 */
+	private static final int MAX_BIN_LENGTH = 60;
+
+	/**
+	 * The minimum length of encoded data allowed to be decoded is 5 bytes
+	 */
+	private static final int MIN_BIN_LENGTH = 5;
+
+	/**
 	 * The DMedia file store requires 24 byte long D-Base32 encoded ids
 	 */
 	public static final int RANDOM_ID_ENC_LENGTH = 24;
@@ -93,7 +113,7 @@ public class Dbase32 {
 	 * @throws Dbase32Exception
 	 */
 	public static boolean checkDb32EncodableData(byte[] bytes, boolean throwException) throws Dbase32Exception {
-		if (bytes.length < 5 || bytes.length >= 60 || bytes.length % 5 != 0) {
+		if (bytes.length < MIN_BIN_LENGTH || bytes.length >= MAX_BIN_LENGTH || bytes.length % MIN_BIN_LENGTH != 0) {
 			if (!throwException)
 				return false;
 
@@ -110,7 +130,7 @@ public class Dbase32 {
 	 * @throws Dbase32Exception
 	 */
 	public static boolean checkDb32Id(byte[] bytes, boolean throwException) throws Dbase32Exception {
-		if (bytes.length < 6 || bytes.length > 96 || bytes.length % 8 != 0) {
+		if (bytes.length < MIN_ENC_LENGTH || bytes.length > MAX_ENC_LENGTH || bytes.length % MIN_ENC_LENGTH != 0) {
 			if (!throwException)
 				return false;
 
