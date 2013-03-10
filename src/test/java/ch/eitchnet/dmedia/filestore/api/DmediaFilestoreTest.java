@@ -61,9 +61,9 @@ public class DmediaFilestoreTest {
 
 	@Test
 	public void testIsDb32() {
-		Assert.assertEquals(true, Dbase32.isDb32Id("AAAAAAAABBBBBBB".getBytes()));
-		Assert.assertEquals(false, Dbase32.isDb32Id("AAAAAAAZ".getBytes()));
-		Assert.assertEquals(false, Dbase32.isDb32Id("AAAAAAA".getBytes()));
+		Assert.assertEquals(true, Dbase32.isDb32Id("AAAAAAAA"));
+		Assert.assertEquals(false, Dbase32.isDb32Id("AAAAAAAZ"));
+		Assert.assertEquals(false, Dbase32.isDb32Id("AAAAAAA"));
 	}
 
 	@Test
@@ -73,27 +73,27 @@ public class DmediaFilestoreTest {
 		Assert.assertEquals("A Dbas32 ID must be " + Dbase32.RANDOM_ID_ENC_LENGTH + " long", Dbase32.RANDOM_ID_ENC_LENGTH,
 				randomId.length());
 
-		Dbase32.checkDb32(randomId);
+		Dbase32.checkDb32Id(randomId);
 	}
 
 	@Test
 	public void testCheckDb32() {
 
 		try {
-			Dbase32.checkDb32("AAAAAAAA".getBytes());
+			Dbase32.checkDb32Id("AAAAAAAA".getBytes());
 		} catch (Dbase32Exception e) {
 			Assert.fail("This value is valid and should not throw an exception!");
 		}
 
 		try {
-			Dbase32.checkDb32("AAAAAAAZ".getBytes());
+			Dbase32.checkDb32Id("AAAAAAAZ".getBytes());
 			Assert.fail("This value is invalid and should throw an exception");
 		} catch (Dbase32Exception e) {
 			// good
 		}
 
 		try {
-			Dbase32.checkDb32("AAAAAAA".getBytes());
+			Dbase32.checkDb32Id("AAAAAAA".getBytes());
 			Assert.fail("This value is invalid and should throw an exception");
 		} catch (Dbase32Exception e) {
 			// good

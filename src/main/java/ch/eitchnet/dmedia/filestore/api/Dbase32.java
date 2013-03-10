@@ -47,6 +47,7 @@ public class Dbase32 {
 	}
 
 	public static byte[] db32Enc(byte[] bytes) {
+		checkDb32EncodableData(bytes, true);
 		return BaseEncoding.toBase32Dmedia(bytes);
 	}
 
@@ -55,6 +56,7 @@ public class Dbase32 {
 	}
 
 	public static byte[] db32Dec(byte[] bytes) {
+		checkDb32Id(bytes, true);
 		return BaseEncoding.fromBase32Dmedia(bytes);
 	}
 
@@ -63,7 +65,7 @@ public class Dbase32 {
 	}
 
 	public static boolean isDb32Id(byte[] bytes) {
-		return checkDb32(bytes, false) && BaseEncoding.isBase32Dmedia(bytes);
+		return checkDb32Id(bytes, false);
 	}
 
 	/**
@@ -71,8 +73,8 @@ public class Dbase32 {
 	 * 
 	 * @throws Dbase32Exception
 	 */
-	public static void checkDb32(String data) throws Dbase32Exception {
-		checkDb32(data.getBytes(), true);
+	public static void checkDb32Id(String data) throws Dbase32Exception {
+		checkDb32Id(data.getBytes(), true);
 	}
 
 	/**
@@ -80,8 +82,25 @@ public class Dbase32 {
 	 * 
 	 * @throws Dbase32Exception
 	 */
-	public static void checkDb32(byte[] bytes) throws Dbase32Exception {
-		checkDb32(bytes, true);
+	public static void checkDb32Id(byte[] bytes) throws Dbase32Exception {
+		checkDb32Id(bytes, true);
+	}
+
+	/**
+	 * @param bytes
+	 * @param throwException
+	 * @return
+	 * @throws Dbase32Exception
+	 */
+	public static boolean checkDb32EncodableData(byte[] bytes, boolean throwException) throws Dbase32Exception {
+		if (bytes.length < 5 || bytes.length >= 60 || bytes.length % 5 != 0) {
+			if (!throwException)
+				return false;
+
+			String msg = "Input can not be D-Base32 encoded as its length is invalid: %s. It must be >= 5 and <= 60 and mod(5) == 0";
+			throw new Dbase32Exception(String.format(msg, bytes.length));
+		}
+		return true;
 	}
 
 	/**
@@ -90,18 +109,26 @@ public class Dbase32 {
 	 * 
 	 * @throws Dbase32Exception
 	 */
-	public static boolean checkDb32(byte[] bytes, boolean throwException) throws Dbase32Exception {
-		if (bytes.length < 5 || bytes.length >= 60 || bytes.length % 5 != 0) {
+	public static boolean checkDb32Id(byte[] bytes, boolean throwException) throws Dbase32Exception {
+		if (bytes.length < 6 || bytes.length > 96 || bytes.length % 8 != 0) {
 			if (!throwException)
 				return false;
 
-			String msg = "Input is not valid D-Base32 encoding as its length is invalid: %s. It must be <= 5 <= 60 and mod(5) == 0";
+			String msg = "Input is not valid D-Base32 encoded data as its length is invalid: %s. It must be >= 6 and <= 96 and mod(8) == 0";
 			throw new Dbase32Exception(String.format(msg, bytes.length));
 		} else if (ArraysHelper.contains(bytes, BaseEncoding.PAD)) {
 			if (!throwException)
 				return false;
 
-			String msg = "Input is not valid D-Base32 encoding as it contains the padding charater (=)";
+			String msg = "Input is not valid D-Base32 encoded data as it contains the padding charater (=)";
+			throw new Dbase32Exception(msg);
+		}
+
+		if (!BaseEncoding.isBase32Dmedia(bytes)) {
+			if (!throwException)
+				return false;
+
+			String msg = "Input is not valid D-Base32 encoded data as it contains illegal values which are not mapped by the given alphabet!";
 			throw new Dbase32Exception(msg);
 		}
 
