@@ -23,6 +23,7 @@ package ch.eitchnet.dmedia.filestore.api;
 
 import nl.warper.skein.Skein;
 
+import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,10 +42,63 @@ public class DmediaFilestoreTest {
 	private static final int LEAF_SIZE = 8388608;
 	private static final int BLOCK_BITS = 512;
 	private static final int DIGEST_BITS = 240;
-	private static final int DIGEST_BYTES = 35;
-	private static final int DIGEST_B32LEN = 56;
+	private static final int DIGEST_BYTES = 30;
+	private static final int DIGEST_B32LEN = 48;
 	private static final String PERS_LEAF = "20110430 jderose@novacut.com dmedia/leaf";
 	private static final String PERS_ROOT = "20110430 jderose@novacut.com dmedia/root";
+
+	@Test
+	public void testDbase32Enc() {
+		Assert.assertArrayEquals("Wrong D-Base32 encoding!", "FCNPVRELI7J9FUUI".getBytes(),
+				Dbase32.db32Enc("binary foo".getBytes()));
+	}
+
+	@Test
+	public void testDbase32Dec() {
+		Assert.assertArrayEquals("Wrong D-Base32 Decoding!", "binary foo".getBytes(),
+				Dbase32.db32Dec("FCNPVRELI7J9FUUI".getBytes()));
+	}
+
+	@Test
+	public void testIsDb32() {
+		Assert.assertEquals(true, Dbase32.isDb32Id("AAAAAAAABBBBBBB".getBytes()));
+		Assert.assertEquals(false, Dbase32.isDb32Id("AAAAAAAZ".getBytes()));
+		Assert.assertEquals(false, Dbase32.isDb32Id("AAAAAAA".getBytes()));
+	}
+
+	@Test
+	public void testDb32Id() {
+
+		String randomId = Dbase32.generateRandomIdAsString();
+		Assert.assertEquals("A Dbas32 ID must be " + Dbase32.RANDOM_ID_ENC_LENGTH + " long", Dbase32.RANDOM_ID_ENC_LENGTH,
+				randomId.length());
+
+		Dbase32.checkDb32(randomId);
+	}
+
+	@Test
+	public void testCheckDb32() {
+
+		try {
+			Dbase32.checkDb32("AAAAAAAA".getBytes());
+		} catch (Dbase32Exception e) {
+			Assert.fail("This value is valid and should not throw an exception!");
+		}
+
+		try {
+			Dbase32.checkDb32("AAAAAAAZ".getBytes());
+			Assert.fail("This value is invalid and should throw an exception");
+		} catch (Dbase32Exception e) {
+			// good
+		}
+
+		try {
+			Dbase32.checkDb32("AAAAAAA".getBytes());
+			Assert.fail("This value is invalid and should throw an exception");
+		} catch (Dbase32Exception e) {
+			// good
+		}
+	}
 
 	@Test
 	public void shouldValidateTestVectors() {
