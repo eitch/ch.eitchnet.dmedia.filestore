@@ -21,14 +21,19 @@
  */
 package ch.eitchnet.dmedia.filestore.api;
 
+import java.io.File;
+
 import nl.warper.skein.Skein;
 
+import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import ch.eitchnet.utils.helper.BaseEncoding;
+import ch.eitchnet.utils.helper.FileHelper;
 import ch.eitchnet.utils.helper.StringHelper;
 
 /**
@@ -49,6 +54,58 @@ public class DmediaFilestoreTest {
 	private static final int DIGEST_B32LEN = 48;
 	private static final String PERS_LEAF = "20110430 jderose@novacut.com dmedia/leaf";
 	private static final String PERS_ROOT = "20110430 jderose@novacut.com dmedia/root";
+
+	private static final String TEST_VECTOR_PATH = "target/testvectors/";
+	private static final String TEST_VECTOR_A = "A";
+	private static final String TEST_VECTOR_B = "B";
+	private static final String TEST_VECTOR_C = "C";
+	private static final String TEST_VECTOR_CA = "CA";
+	private static final String TEST_VECTOR_CB = "CB";
+	private static final String TEST_VECTOR_CC = "CC";
+
+	@BeforeClass
+	public static void beforeClass() {
+
+		File dirF = new File(TEST_VECTOR_PATH);
+		if (dirF.exists() && !FileHelper.deleteFile(dirF, false))
+			throw new RuntimeException("Could not remove existing path " + dirF.getAbsolutePath());
+		if (!dirF.mkdirs())
+			throw new RuntimeException("Could not create path " + dirF.getAbsolutePath());
+
+		byte[] bytes;
+		File dstFile;
+
+		bytes = generateTestVectorA();
+		dstFile = new File(TEST_VECTOR_PATH + TEST_VECTOR_A);
+		FileHelper.writeToFile(bytes, dstFile);
+
+		bytes = generateTestVectorB();
+		dstFile = new File(TEST_VECTOR_PATH + TEST_VECTOR_B);
+		FileHelper.writeToFile(bytes, dstFile);
+
+		bytes = generateTestVectorC();
+		dstFile = new File(TEST_VECTOR_PATH + TEST_VECTOR_C);
+		FileHelper.writeToFile(bytes, dstFile);
+
+		bytes = generateTestVectorCA();
+		dstFile = new File(TEST_VECTOR_PATH + TEST_VECTOR_CA);
+		FileHelper.writeToFile(bytes, dstFile);
+
+		bytes = generateTestVectorCB();
+		dstFile = new File(TEST_VECTOR_PATH + TEST_VECTOR_CB);
+		FileHelper.writeToFile(bytes, dstFile);
+
+		bytes = generateTestVectorCC();
+		dstFile = new File(TEST_VECTOR_PATH + TEST_VECTOR_CC);
+		FileHelper.writeToFile(bytes, dstFile);
+	}
+
+	@AfterClass
+	public static void afterClass() {
+		File dirF = new File(TEST_VECTOR_PATH);
+		if (dirF.exists() && !FileHelper.deleteFile(dirF, false))
+			throw new RuntimeException("Could not remove existing path " + dirF.getAbsolutePath());
+	}
 
 	@Test
 	public void testDbase32Enc() {
@@ -129,7 +186,7 @@ public class DmediaFilestoreTest {
 		Assert.assertEquals("77264eb6eed7777a1ee03e2601fc9f64", StringHelper.getHexString(StringHelper.hashMd5(bytes)));
 
 		// CC
-		bytes = generateTestVectorsCC();
+		bytes = generateTestVectorCC();
 		Assert.assertEquals("1fbfabdaafff31967f9a95f3a3d3c642", StringHelper.getHexString(StringHelper.hashMd5(bytes)));
 
 		// integers
@@ -146,59 +203,47 @@ public class DmediaFilestoreTest {
 		Assert.assertEquals("0445d91d37383f5384023d49e71cc629", StringHelper.hashMd5AsHex(PERS_ROOT));
 	}
 
-	private byte[] generateTestVectorsCC() {
-		byte[] bytes;
-		bytes = new byte[LEAF_SIZE + LEAF_SIZE];
-		for (int i = 0; i < bytes.length; i++) {
-			bytes[i] = 'C';
-		}
-		return bytes;
-	}
+	@Test
+	public void testMd5TestVectors() {
 
-	private byte[] generateTestVectorCB() {
 		byte[] bytes;
-		bytes = new byte[LEAF_SIZE + LEAF_SIZE - 1];
-		for (int i = 0; i < bytes.length; i++) {
-			if (i >= LEAF_SIZE)
-				bytes[i] = 'B';
-			else
-				bytes[i] = 'C';
-		}
-		return bytes;
-	}
 
-	private byte[] generateTestVectorCA() {
-		byte[] bytes;
-		bytes = new byte[LEAF_SIZE + 1];
-		for (int i = 0; i < bytes.length; i++) {
-			bytes[i] = 'C';
-		}
-		bytes[bytes.length - 1] = 'A';
-		return bytes;
-	}
+		// A
+		bytes = FileHelper.readFile(new File(TEST_VECTOR_PATH + TEST_VECTOR_A));
+		Assert.assertEquals("7fc56270e7a70fa81a5935b72eacbe29", StringHelper.getHexString(StringHelper.hashMd5(bytes)));
 
-	private byte[] generateTestVectorC() {
-		byte[] bytes;
-		bytes = new byte[LEAF_SIZE];
-		for (int i = 0; i < bytes.length; i++) {
-			bytes[i] = 'C';
-		}
-		return bytes;
-	}
+		// B
+		bytes = FileHelper.readFile(new File(TEST_VECTOR_PATH + TEST_VECTOR_B));
+		Assert.assertEquals("d2bad3eedb424dd352d65eafbf6c79ba", StringHelper.getHexString(StringHelper.hashMd5(bytes)));
 
-	private byte[] generateTestVectorB() {
-		byte[] bytes;
-		bytes = new byte[LEAF_SIZE - 1];
-		for (int i = 0; i < bytes.length; i++) {
-			bytes[i] = 'B';
-		}
-		return bytes;
-	}
+		// C
+		bytes = FileHelper.readFile(new File(TEST_VECTOR_PATH + TEST_VECTOR_C));
+		Assert.assertEquals("5dd3531303dd6764acb93e5f171a4ab8", StringHelper.getHexString(StringHelper.hashMd5(bytes)));
 
-	private byte[] generateTestVectorA() {
-		byte[] bytes;
-		bytes = new byte[] { 'A' };
-		return bytes;
+		// CA
+		bytes = FileHelper.readFile(new File(TEST_VECTOR_PATH + TEST_VECTOR_CA));
+		Assert.assertEquals("0722f8dc36d75acb602dcee8d0427ce0", StringHelper.getHexString(StringHelper.hashMd5(bytes)));
+
+		// CB
+		bytes = FileHelper.readFile(new File(TEST_VECTOR_PATH + TEST_VECTOR_CB));
+		Assert.assertEquals("77264eb6eed7777a1ee03e2601fc9f64", StringHelper.getHexString(StringHelper.hashMd5(bytes)));
+
+		// CC
+		bytes = FileHelper.readFile(new File(TEST_VECTOR_PATH + TEST_VECTOR_CC));
+		Assert.assertEquals("1fbfabdaafff31967f9a95f3a3d3c642", StringHelper.getHexString(StringHelper.hashMd5(bytes)));
+
+		// integers
+		Assert.assertEquals("cfcd208495d565ef66e7dff9f98764da", StringHelper.hashMd5AsHex("0"));
+		Assert.assertEquals("c4ca4238a0b923820dcc509a6f75849b", StringHelper.hashMd5AsHex("1"));
+		Assert.assertEquals("48ac8929ffdc78a66090d179ff1237d5", StringHelper.hashMd5AsHex("16777215"));
+		Assert.assertEquals("e3e330499348f791337e9da6b534a386", StringHelper.hashMd5AsHex("16777216"));
+		Assert.assertEquals("32433904a755e2b9eb82cf167723b34f", StringHelper.hashMd5AsHex("8388607"));
+		Assert.assertEquals("03926fda4e223707d290ac06bb996653", StringHelper.hashMd5AsHex("8388608"));
+		Assert.assertEquals("e9b74719ce6b80c5337148d12725db03", StringHelper.hashMd5AsHex("8388609"));
+
+		// personalization
+		Assert.assertEquals("8aee35e23a5a74147b230f12123ca82e", StringHelper.hashMd5AsHex(PERS_LEAF));
+		Assert.assertEquals("0445d91d37383f5384023d49e71cc629", StringHelper.hashMd5AsHex(PERS_ROOT));
 	}
 
 	@Test
@@ -216,5 +261,60 @@ public class DmediaFilestoreTest {
 		logger.info("MD5 Hash: " + StringHelper.getHexString(StringHelper.hashMd5(message)));
 		logger.info("Skein HEX: " + StringHelper.getHexString(digest));
 		logger.info("Skein D-Media Hash: " + hash);
+	}
+
+	private static byte[] generateTestVectorCC() {
+		byte[] bytes;
+		bytes = new byte[LEAF_SIZE + LEAF_SIZE];
+		for (int i = 0; i < bytes.length; i++) {
+			bytes[i] = 'C';
+		}
+		return bytes;
+	}
+
+	private static byte[] generateTestVectorCB() {
+		byte[] bytes;
+		bytes = new byte[LEAF_SIZE + LEAF_SIZE - 1];
+		for (int i = 0; i < bytes.length; i++) {
+			if (i >= LEAF_SIZE)
+				bytes[i] = 'B';
+			else
+				bytes[i] = 'C';
+		}
+		return bytes;
+	}
+
+	private static byte[] generateTestVectorCA() {
+		byte[] bytes;
+		bytes = new byte[LEAF_SIZE + 1];
+		for (int i = 0; i < bytes.length; i++) {
+			bytes[i] = 'C';
+		}
+		bytes[bytes.length - 1] = 'A';
+		return bytes;
+	}
+
+	private static byte[] generateTestVectorC() {
+		byte[] bytes;
+		bytes = new byte[LEAF_SIZE];
+		for (int i = 0; i < bytes.length; i++) {
+			bytes[i] = 'C';
+		}
+		return bytes;
+	}
+
+	private static byte[] generateTestVectorB() {
+		byte[] bytes;
+		bytes = new byte[LEAF_SIZE - 1];
+		for (int i = 0; i < bytes.length; i++) {
+			bytes[i] = 'B';
+		}
+		return bytes;
+	}
+
+	private static byte[] generateTestVectorA() {
+		byte[] bytes;
+		bytes = new byte[] { 'A' };
+		return bytes;
 	}
 }
