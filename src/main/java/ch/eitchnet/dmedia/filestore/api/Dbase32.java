@@ -62,6 +62,10 @@ public class Dbase32 {
 	 */
 	private static final int RANDOM_ID_DEC_LENGTH = 15;
 
+	public static String db32EncAsString(byte[] bytes) {
+		return new String(db32Enc(bytes));
+	}
+
 	public static String db32Enc(String data) {
 		return db32Enc(data);
 	}
@@ -73,6 +77,10 @@ public class Dbase32 {
 
 	public static String db32Dec(String data) {
 		return new String(db32Dec(data.getBytes()));
+	}
+
+	public static String db32DecAsString(byte[] bytes) {
+		return new String(db32Dec(bytes));
 	}
 
 	public static byte[] db32Dec(byte[] bytes) {
